@@ -5,7 +5,7 @@ from .commands.make_entity import make_entity
 @click.group()
 @click.version_option("1.0.0", prog_name="fastforge")
 def cli():
-    """⚡ FastForge — Symfony-style CLI scaffolder for FastAPI + SQLAlchemy + Jinja2"""
+    """⚡ FastForge - CLI scaffolder for FastAPI"""
     pass
 
 @cli.command("init")

@@ -36,12 +36,23 @@ def make_entity(entity_name, raw_fields, no_router=False, no_controller=False):
         raise SystemExit(1)
         
     project_name = project_names[0]
+    base = Path(f"src/{project_name}")
+
+    db_type = "sql"
+    db_file = base / "data" / "database.py"
+    if db_file.exists():
+        db_content = db_file.read_text()
+        if "connect_to_mongo" in db_content or "motor" in db_content:
+            db_type = "mongodb"
+
+    table_name = entity_name.lower() if entity_name.lower().endswith("s") else entity_name.lower() + "s"
 
     ctx = {
         "project_name": project_name,
+        "db_type": db_type,
         "entity_name": entity_name,
         "entity_name_lower": entity_name.lower(),
-        "table_name": entity_name.lower() + "s",
+        "table_name": table_name,
         "fields": fields,
         "has_date": any(f.type == "date" for f in fields),
         "has_datetime": any(f.type == "datetime" for f in fields),
@@ -49,7 +60,7 @@ def make_entity(entity_name, raw_fields, no_router=False, no_controller=False):
         "has_hash": any(f.hash for f in fields),
         "has_fk": any(f.foreign_key for f in fields),
     }
-    base = Path(f"src/{project_name}")
+    
     write(base / "entity" / f"{entity_name.lower()}.py", render("model.py.j2", ctx))
     write(base / "schema" / f"{entity_name.lower()}.py", render("schema.py.j2", ctx))
     if not no_controller:
@@ -64,8 +75,16 @@ def make_entity(entity_name, raw_fields, no_router=False, no_controller=False):
             include_statement = f"app.include_router(r_{entity_name.lower()})"
             
             if include_statement not in content:
-                content += f"\n{import_statement}\n{include_statement}\n"
-                main_py_path.write_text(content)
+                lines = content.split('\n')
+                last_import_idx = 0
+                for i, line in enumerate(lines):
+                    if line.startswith("import ") or line.startswith("from "):
+                        last_import_idx = i
+                
+                lines.insert(last_import_idx + 1, import_statement)
+                lines.append(include_statement)
+                
+                main_py_path.write_text('\n'.join(lines) + '\n')
                 click.echo(click.style(f"  {'updated':>10}  {main_py_path} (added router)", fg="blue"))
 
     click.echo(click.style(f"\n✔ Entity '{entity_name}' generated!\n", fg="green", bold=True))
@@ -73,7 +92,6 @@ def make_entity(entity_name, raw_fields, no_router=False, no_controller=False):
         click.echo(click.style("  ⚠ Champ encrypt détecté — génère ta FERNET_KEY dans .env :", fg="yellow"))
         click.echo('    python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"')
         click.echo()
-    t = entity_name.lower() + "s"
-    for method, path in [("GET",f"/{t}"),("GET",f"/{t}/{{id}}"),("POST",f"/{t}"),("PATCH",f"/{t}/{{id}}"),("DELETE",f"/{t}/{{id}}")]:
+    for method, path in [("GET",f"/{table_name}"),("GET",f"/{table_name}/{{id}}"),("POST",f"/{table_name}"),("PATCH",f"/{table_name}/{{id}}"),("DELETE",f"/{table_name}/{{id}}")]:
         click.echo(f"    {method:<8} {path}")
     click.echo()
