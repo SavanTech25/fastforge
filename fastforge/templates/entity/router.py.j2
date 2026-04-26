@@ -1,0 +1,35 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+from {{ project_name }}.data.database import get_db
+from {{ project_name }}.schema.{{ entity_name_lower }} import {{ entity_name }}Create, {{ entity_name }}Update, {{ entity_name }}Response
+from {{ project_name }}.controller import {{ entity_name_lower }} as ctrl
+
+router = APIRouter(prefix="/{{ entity_name_lower }}s", tags=["{{ entity_name }}"])
+
+@router.get("/", response_model=List[{{ entity_name }}Response])
+def list_{{ entity_name_lower }}s(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return ctrl.get_{{ entity_name_lower }}s(db, skip=skip, limit=limit)
+
+@router.get("/{id}", response_model={{ entity_name }}Response)
+def get_{{ entity_name_lower }}(id: int, db: Session = Depends(get_db)):
+    obj = ctrl.get_{{ entity_name_lower }}(db, id)
+    if not obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="{{ entity_name }} not found")
+    return obj
+
+@router.post("/", response_model={{ entity_name }}Response, status_code=status.HTTP_201_CREATED)
+def create_{{ entity_name_lower }}(data: {{ entity_name }}Create, db: Session = Depends(get_db)):
+    return ctrl.create_{{ entity_name_lower }}(db, data)
+
+@router.patch("/{id}", response_model={{ entity_name }}Response)
+def update_{{ entity_name_lower }}(id: int, data: {{ entity_name }}Update, db: Session = Depends(get_db)):
+    obj = ctrl.update_{{ entity_name_lower }}(db, id, data)
+    if not obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="{{ entity_name }} not found")
+    return obj
+
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_{{ entity_name_lower }}(id: int, db: Session = Depends(get_db)):
+    if not ctrl.delete_{{ entity_name_lower }}(db, id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="{{ entity_name }} not found")

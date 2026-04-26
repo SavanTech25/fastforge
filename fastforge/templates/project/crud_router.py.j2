@@ -1,0 +1,101 @@
+from fastapi import APIRouter, Depends, BackgroundTasks
+from bson.objectid import ObjectId
+from {{ project_name|lower }}.middleware.middleware import JWTBearer
+# from {{ project_name|lower }}.utils.controller import http_error
+# from {{ project_name|lower }}.services.rag_ingestion_service import RagIngestionService
+# from {{ project_name|lower }}.entity.Files import Files
+from fastapi_cache.decorator import cache
+from fastapi import HTTPException
+
+def http_error(detail: str, status_code: int = 400):
+    raise HTTPException(status_code=status_code, detail=detail)
+
+def create_crud_router(entity_class, model_class, prefix: str):
+
+    router = APIRouter(prefix=f"/{prefix}", tags=[prefix])
+
+    @router.post("", dependencies=[Depends(JWTBearer())])
+    async def create(data: model_class, background_tasks: BackgroundTasks):
+        try:
+            model = entity_class()
+            model.load(data)
+            res = model.save()
+            if res and res.inserted_id:
+                # specific check for RAG ingestion on Hub
+                if prefix == "hub" and hasattr(data, "file") and data.file:
+                    pass
+                    # rag_service = RagIngestionService()
+                    # background_tasks.add_task(
+                    #     rag_service.process_file_for_rag,
+                    #     file_id=str(data.file),
+                    #     hub_id=str(res.inserted_id),
+                    #     ecole_id=str(data.ecole)
+                    # )
+                elif prefix == "planning":
+                    if res == -1:
+                        return {"message": "Conflit d'horaire détecté.", "state": "warning"}
+                return {"message": f"{prefix} créé avec succès", "state": "success"}
+            return {"message": f"{prefix} non sauvegardé", "state": "warning"}
+        except Exception as e:
+            http_error(str(e), 400)
+
+    @router.get("/{id}", dependencies=[Depends(JWTBearer())])
+    @cache(expire=60)
+    async def get_one(id: str):
+        try:
+            result = entity_class().getById(id)
+            if not result:
+                return {"message": f"{prefix} introuvable", "state": "warning"}
+            return {prefix: result}
+        except Exception as e:
+            http_error(str(e), 400)
+
+    @router.get("", dependencies=[Depends(JWTBearer())])
+    @cache(expire=60)
+    async def get_all():
+        try:
+            return {f"{prefix}s": entity_class().getAll()}
+        except Exception as e:
+            http_error(str(e), 400)
+
+    @router.put("/{id}", dependencies=[Depends(JWTBearer())])
+    async def update(id: str, data: model_class):
+        try:
+            model = entity_class()
+            model.load(data)
+            model.setId(ObjectId(id))
+            res = model.update()
+            if res and res.modified_count > 0:
+                return {"message": f"{prefix} mis à jour", "state": "success"}
+            return {"message": "rien a changé", "state": "warning"}
+        except Exception as e:
+            http_error(str(e), 400)
+
+    @router.delete("/{id}", dependencies=[Depends(JWTBearer())])
+    async def delete(id: str, background_tasks: BackgroundTasks):
+        try:
+            model = entity_class()
+            model.setId(ObjectId(id))
+            res = model.delete()
+            if res and res.deleted_count > 0:
+                if prefix == "hub":
+                    pass
+                    # from {{ project_name|lower }}.entity.HubChunk import HubChunk
+                    # import asyncio
+                    #
+                    # files = Files()
+                    # element = model.getById(id)
+                    # if element and element.get('file'):
+                    #     files.setId(element['file'])
+                    #     files.delete()
+                    # 
+                    # def delete_hub_chunks(h_id):
+                    #     HubChunk().deleteByHubId(h_id)
+                    #     
+                    # background_tasks.add_task(asyncio.to_thread, delete_hub_chunks, str(ObjectId(id)))
+                return {"message": f"{prefix} supprimé", "state": "success"}
+            return {"message": f"{prefix} non supprimé", "state": "warning"}
+        except Exception as e:
+            http_error(str(e), 400)
+
+    return router

@@ -1,0 +1,35 @@
+from sqlalchemy.orm import Session
+from typing import Optional
+from {{ project_name }}.entity.{{ entity_name_lower }} import {{ entity_name }}
+from {{ project_name }}.schema.{{ entity_name_lower }} import {{ entity_name }}Create, {{ entity_name }}Update
+
+def get_{{ entity_name_lower }}(db: Session, {{ entity_name_lower }}_id: int) -> Optional[{{ entity_name }}]:
+    return db.query({{ entity_name }}).filter({{ entity_name }}.id == {{ entity_name_lower }}_id).first()
+
+def get_{{ entity_name_lower }}s(db: Session, skip: int = 0, limit: int = 100) -> list:
+    return db.query({{ entity_name }}).offset(skip).limit(limit).all()
+
+def create_{{ entity_name_lower }}(db: Session, data: {{ entity_name }}Create) -> {{ entity_name }}:
+    obj = {{ entity_name }}(**data.model_dump())
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+def update_{{ entity_name_lower }}(db: Session, {{ entity_name_lower }}_id: int, data: {{ entity_name }}Update) -> Optional[{{ entity_name }}]:
+    obj = get_{{ entity_name_lower }}(db, {{ entity_name_lower }}_id)
+    if not obj:
+        return None
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(obj, key, value)
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+def delete_{{ entity_name_lower }}(db: Session, {{ entity_name_lower }}_id: int) -> bool:
+    obj = get_{{ entity_name_lower }}(db, {{ entity_name_lower }}_id)
+    if not obj:
+        return False
+    db.delete(obj)
+    db.commit()
+    return True
