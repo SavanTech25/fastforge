@@ -50,6 +50,28 @@ fastforge make:entity User name:string age:int email:string:hash is_active:bool
 - **Types:** `string`, `int`, `float`, `bool`, `text`, `date`, `datetime`
 - **Modifiers:** `encrypt`, `hash`, `nullable`, `fk=ModelName`
 
+### 4. FastForge ETL (dbt Integration)
+
+FastForge now includes native scaffolding for analytical engineering via **dbt**! 
+
+To initialize a complete dbt project package inside your `src/` directory:
+
+```bash
+fastforge init:etl my_dbt_project --archi medallion --connector local
+```
+- **`--archi`**: Choose `default` (stg, int, mart), `medallion` (bronze, silver, gold), or `star` (raw, dim, fact).
+- **`--connector`**: Choose `local` (DuckDB), `snowflake`, `bigquery`, or `postgres`.
+
+To quickly scaffold a dbt model inside your project without boilerplate:
+
+```bash
+fastforge make:dbt fact_user --view --incremental --layer silver
+```
+- **`--view`**: Sets materialization to `view`.
+- **`--incremental`**: Configures incremental logic automatically.
+- **`--python`**: Generates a Python dbt model instead of SQL.
+- **`--layer`**: Places the model in a specific architectural folder (e.g., `silver`).
+
 ## 🏗️ Architecture
 
 When you initialize a project with FastForge, it generates a clean, modular structure. 

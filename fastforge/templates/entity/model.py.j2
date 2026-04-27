@@ -1,4 +1,13 @@
+{% if db_type == "mongodb" %}
+from {{ project_name }}.entity.base_entity import Entity
+
+class {{ entity_name }}(Entity):
+    def __init__(self):
+        super().__init__("{{ table_name }}")
+
+{% else %}
 from sqlalchemy import Column, Integer, String, Boolean, Float, Text{% if has_date %}, Date{% endif %}{% if has_datetime %}, DateTime{% endif %}{% if has_fk %}, ForeignKey{% endif %}
+
 from sqlalchemy.orm import relationship
 from {{ project_name }}.data.database import Base
 {% if has_encrypt %}
@@ -52,3 +61,4 @@ class {{ entity_name }}(Base):
 {% endfor %}
     def __repr__(self):
         return f"<{{ entity_name }} id={self.id}>"
+{% endif %}
