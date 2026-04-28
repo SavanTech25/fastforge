@@ -1,8 +1,8 @@
 import click
-from .commands.init import init_project
-from .commands.init_etl import init_etl_project
-from .commands.make_entity import make_entity
-from .commands.make_dbt import make_dbt
+from fastforge.commands.init import init_project
+from fastforge.commands.init_etl import init_etl_project
+from fastforge.commands.make_entity import make_entity
+from fastforge.commands.make_dbt import make_dbt
 
 @click.group()
 @click.version_option("1.0.0", prog_name="fastforge")
