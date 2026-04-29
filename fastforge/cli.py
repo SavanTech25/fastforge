@@ -3,6 +3,7 @@ from fastforge.commands.init import init_project
 from fastforge.commands.init_etl import init_etl_project
 from fastforge.commands.make_entity import make_entity
 from fastforge.commands.make_dbt import make_dbt
+from fastforge.commands.make_service import make_service
 
 @click.group()
 @click.version_option("1.0.0", prog_name="fastforge")
@@ -56,6 +57,17 @@ def make_dbt_cmd(model_name, view, incremental, python, layer):
     Generate a dbt model.
     """
     make_dbt(model_name, view, incremental, python, layer)
+
+@cli.command("make:service")
+@click.argument("service_name")
+@click.option("--type", "service_type", required=True, type=click.Choice(["rag", "agent", "agentic", "ocr"]), help="Type of AI service")
+@click.option("--provider", required=True, type=click.Choice(["openai", "anthropic", "mistral", "gemini", "azure"]), help="AI Provider to use")
+@click.option("--vector-store", default="chroma", type=click.Choice(["chroma", "qdrant", "supabase"]), help="Vector store (RAG only)")
+def make_service_cmd(service_name, service_type, provider, vector_store):
+    """
+    Generate an AI service (RAG, Agent, OCR, etc) and its router.
+    """
+    make_service(service_name, service_type, provider, vector_store)
 
 def main():
     cli()

@@ -14,6 +14,7 @@ fastforge/commands/init.py
 fastforge/commands/init_etl.py
 fastforge/commands/make_dbt.py
 fastforge/commands/make_entity.py
+fastforge/commands/make_service.py
 fastforge/templates/dbt/README.md.j2
 fastforge/templates/dbt/dbt_project.yml.j2
 fastforge/templates/dbt/example_python_model.py.j2
@@ -41,3 +42,8 @@ fastforge/templates/project/main.py.j2
 fastforge/templates/project/middleware.py.j2
 fastforge/templates/project/pyproject.toml.j2
 fastforge/templates/project/scheduling.py.j2
+fastforge/templates/service/agent.py.j2
+fastforge/templates/service/agentic.py.j2
+fastforge/templates/service/ocr.py.j2
+fastforge/templates/service/r_service.py.j2
+fastforge/templates/service/rag.py.j2

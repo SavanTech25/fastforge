@@ -69,8 +69,24 @@ fastforge make:dbt fact_user --view --incremental --layer silver
 ```
 - **`--view`**: Sets materialization to `view`.
 - **`--incremental`**: Configures incremental logic automatically.
-- **`--python`**: Generates a Python dbt model instead of SQL.
-- **`--layer`**: Places the model in a specific architectural folder (e.g., `silver`).
+### 5. Generate AI Services
+
+FastForge includes a powerful `make:service` command that instantly scaffolds production-ready AI services (RAG, Agents, OCR) connected directly to your FastAPI routes.
+
+```bash
+fastforge make:service DocumentOCR --type ocr --provider azure
+```
+
+**Options:**
+- **`--type`**: Choose `rag` (Retrieval-Augmented Generation), `agent` (Tool-calling Agent), `agentic` (Workflow State Graph), or `ocr` (Vision Extraction).
+- **`--provider`**: Choose `openai`, `anthropic`, `mistral`, `gemini`, or `azure`.
+- **`--vector-store`**: (For `rag` type only). Choose `chroma` (Local), `qdrant` (Cloud/Docker), or `supabase` (PostgreSQL/pgvector). Defaults to `chroma`.
+
+**Example: Building a fully-functional RAG service with Qdrant and OpenAI**
+```bash
+fastforge make:service HelpdeskBot --type rag --provider openai --vector-store qdrant
+```
+This generates the `HelpdeskBotService` integrated with `langchain-openai`, `langchain-qdrant`, and automatically exposes a `POST /helpdeskbot` endpoint with JWT authentication in your FastAPI app!
 
 ## 🏗️ Architecture
 
