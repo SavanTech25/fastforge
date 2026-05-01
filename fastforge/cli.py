@@ -69,6 +69,17 @@ def make_service_cmd(service_name, service_type, provider, vector_store):
     """
     make_service(service_name, service_type, provider, vector_store)
 
+@cli.command("make:sync")
+@click.argument("sync_name")
+@click.option("--source", default="mongodb", help="Source database")
+@click.option("--dest", default="postgres", help="Destination database")
+def make_sync_cmd(sync_name, source, dest):
+    """
+    Generate a database synchronization script (ELT).
+    """
+    from fastforge.commands.make_sync import make_sync
+    make_sync(sync_name, source, dest)
+
 def main():
     cli()
 

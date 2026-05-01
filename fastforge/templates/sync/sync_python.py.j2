@@ -1,0 +1,73 @@
+from loguru import logger
+from decouple import config
+from pymongo import MongoClient
+import pandas as pd
+from sqlalchemy import create_engine
+from apscheduler.schedulers.blocking import BlockingScheduler
+
+# Config
+MONGO_URI = config("MONGO_URI", default="mongodb://localhost:27017")
+MONGO_DB = config("MONGO_DB", default="{{ project_name }}")
+POSTGRES_URI = config("POSTGRES_URI", default="postgresql://user:password@localhost:5432/{{ project_name }}")
+
+# Define which collections to sync
+COLLECTIONS_TO_SYNC = [
+    # "users", 
+    # "files"
+]
+
+def sync_data():
+    logger.info("Starting ELT sync: MongoDB -> PostgreSQL")
+    try:
+        # Connect to MongoDB
+        mongo_client = MongoClient(MONGO_URI)
+        db = mongo_client[MONGO_DB]
+        
+        # Connect to Postgres
+        engine = create_engine(POSTGRES_URI)
+        
+        for collection_name in COLLECTIONS_TO_SYNC:
+            logger.info(f"Extracting '{collection_name}' from MongoDB...")
+            collection = db[collection_name]
+            cursor = collection.find({})
+            
+            # Load into pandas dataframe
+            df = pd.DataFrame(list(cursor))
+            
+            if df.empty:
+                logger.info(f"Collection '{collection_name}' is empty. Skipping.")
+                continue
+                
+            # Flatten _id (ObjectId to string)
+            if "_id" in df.columns:
+                df["_id"] = df["_id"].astype(str)
+                # Alternatively, rename _id to id
+                # df.rename(columns={"_id": "id"}, inplace=True)
+                
+            logger.info(f"Loading {len(df)} records into PostgreSQL table '{collection_name}'...")
+            
+            # Load into Postgres (replace mode drops the table and recreates it. For incremental, use 'append')
+            df.to_sql(name=collection_name, con=engine, if_exists="replace", index=False)
+            logger.info(f"Successfully synced '{collection_name}'.")
+
+        logger.info("Sync completed successfully.")
+
+    except Exception as e:
+        logger.error(f"Sync failed: {e}")
+    finally:
+        mongo_client.close()
+        engine.dispose()
+
+if __name__ == "__main__":
+    # To run immediately:
+    # sync_data()
+    
+    # To run on a schedule (e.g. every hour):
+    logger.info("Starting ELT Scheduler...")
+    scheduler = BlockingScheduler()
+    scheduler.add_job(sync_data, 'interval', hours=1)
+    
+    try:
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        pass

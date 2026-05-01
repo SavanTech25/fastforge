@@ -88,6 +88,15 @@ fastforge make:service HelpdeskBot --type rag --provider openai --vector-store q
 ```
 This generates the `HelpdeskBotService` integrated with `langchain-openai`, `langchain-qdrant`, and automatically exposes a `POST /helpdeskbot` endpoint with JWT authentication in your FastAPI app!
 
+### 6. Generate Data Sync Scripts (ELT)
+
+To support the standard dbt architecture (where your operational database needs to be replicated to your analytical database), you can use the `make:sync` command.
+
+```bash
+fastforge make:sync MongoToPg --source mongodb --dest postgres
+```
+This scaffolds a pure-Python sync script utilizing `pymongo`, `pandas`, and `sqlalchemy`. The generated script handles flattening NoSQL documents and automatically syncing them to PostgreSQL, with built-in `APScheduler` boilerplate for continuous execution.
+
 ## 🏗️ Architecture
 
 When you initialize a project with FastForge, it generates a clean, modular structure. 
