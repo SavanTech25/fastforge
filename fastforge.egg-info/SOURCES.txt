@@ -15,6 +15,7 @@ fastforge/commands/init_etl.py
 fastforge/commands/make_dbt.py
 fastforge/commands/make_entity.py
 fastforge/commands/make_service.py
+fastforge/commands/make_sync.py
 fastforge/templates/dbt/README.md.j2
 fastforge/templates/dbt/dbt_project.yml.j2
 fastforge/templates/dbt/example_python_model.py.j2
@@ -47,3 +48,6 @@ fastforge/templates/service/agentic.py.j2
 fastforge/templates/service/ocr.py.j2
 fastforge/templates/service/r_service.py.j2
 fastforge/templates/service/rag.py.j2
+fastforge/templates/sync/airbyte_readme.md.j2
+fastforge/templates/sync/docker-compose.airbyte.yml.j2
+fastforge/templates/sync/sync_python.py.j2
