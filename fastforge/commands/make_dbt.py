@@ -12,18 +12,26 @@ def write(path, content):
 def make_dbt(model_name, is_view, is_incremental, is_python, layer):
     click.echo(click.style(f"\n⚡ FastForge ETL — make:dbt {model_name}\n", fg="cyan", bold=True))
     
-    src_dir = Path("src")
-    if not src_dir.exists() or not src_dir.is_dir():
-        click.echo(click.style("✗ 'src' directory not found. Are you in the project root?", fg="red"))
+    cwd = Path.cwd()
+    project_root = None
+    
+    for p in [cwd, *cwd.parents]:
+        if (p / "src").is_dir():
+            project_root = p
+            break
+            
+    if not project_root:
+        click.echo(click.style("✗ Could not resolve project root. Are you inside a FastForge project?", fg="red"))
         raise SystemExit(1)
         
-    project_names = [d.name for d in src_dir.iterdir() if d.is_dir() and d.name != "__pycache__" and not d.name.endswith(".egg-info")]
+    src_dir = project_root / "src"
+    project_names = [d.name for d in src_dir.iterdir() if d.is_dir() and d.name not in ("__pycache__",) and not d.name.endswith(".egg-info")]
     if not project_names:
         click.echo(click.style("✗ No project package found inside 'src/'.", fg="red"))
         raise SystemExit(1)
         
     project_name = project_names[0]
-    models_dir = Path(f"src/{project_name}/models")
+    models_dir = src_dir / project_name / "models"
     
     if not models_dir.exists():
         click.echo(click.style(f"✗ 'models' directory not found in src/{project_name}. Is this a dbt project?", fg="red"))

@@ -25,18 +25,26 @@ def make_entity(entity_name, raw_fields, no_router=False, no_controller=False):
         click.echo(click.style(f"✗ {e}", fg="red"))
         raise SystemExit(1)
 
-    src_dir = Path("src")
-    if not src_dir.exists() or not src_dir.is_dir():
-        click.echo(click.style("✗ 'src' directory not found. Are you in the project root?", fg="red"))
+    cwd = Path.cwd()
+    project_root = None
+    
+    for p in [cwd, *cwd.parents]:
+        if (p / "src").is_dir():
+            project_root = p
+            break
+            
+    if not project_root:
+        click.echo(click.style("✗ Could not resolve project root. Are you inside a FastForge project?", fg="red"))
         raise SystemExit(1)
         
-    project_names = [d.name for d in src_dir.iterdir() if d.is_dir() and d.name != "__pycache__" and not d.name.endswith(".egg-info")]
+    src_dir = project_root / "src"
+    project_names = [d.name for d in src_dir.iterdir() if d.is_dir() and d.name not in ("__pycache__",) and not d.name.endswith(".egg-info")]
     if not project_names:
         click.echo(click.style("✗ No project package found inside 'src/'.", fg="red"))
         raise SystemExit(1)
         
     project_name = project_names[0]
-    base = Path(f"src/{project_name}")
+    base = src_dir / project_name
 
     db_type = "sql"
     db_file = base / "data" / "database.py"
@@ -68,7 +76,7 @@ def make_entity(entity_name, raw_fields, no_router=False, no_controller=False):
     if not no_router:
         write(base / "router" / f"r_{entity_name.lower()}.py", render("router.py.j2", ctx))
         
-        main_py_path = Path("app/main.py")
+        main_py_path = project_root / "app" / "main.py"
         if main_py_path.exists():
             content = main_py_path.read_text()
             import_statement = f"from {project_name}.router.r_{entity_name.lower()} import r_{entity_name.lower()}"
