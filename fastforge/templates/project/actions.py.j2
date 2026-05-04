@@ -1,5 +1,5 @@
 {% if db == "mongodb" %}
-from {{ project_name }}.data.database import connect_to_mongo, close_mongo_connection
+from {{ project_name|lower }}.data.database import connect_to_mongo, close_mongo_connection
 from fastapi import UploadFile
 from loguru import logger
 
@@ -13,15 +13,13 @@ async def make_crud_action(tablename: str, action: str, **kwargs):
     if action not in actions:
         raise ValueError(f"action must be one of: {actions}")
     
-    # Needs a way to get motor db instance
-    from {{ project_name }}.data.database import client
-    from {{ project_name }}.config import settings
+    # Get motor db instance
+    from {{ project_name|lower }}.data.database import get_db
+    db = await get_db()
     
-    if not client:
+    if not db:
         return None
     
-    db_name = settings.DATABASE_URL.split('/')[-1] if '/' in settings.DATABASE_URL else "fastforge_db"
-    db = client[db_name]
     collection = db[tablename]
     
     if action == "insert_one":
@@ -46,13 +44,11 @@ async def handle_file(action: str, file: UploadFile = None, file_content: bytes 
     if action not in actions:
         raise ValueError(f"action must be one of: {actions}")
     
-    from {{ project_name }}.data.database import client
-    from {{ project_name }}.config import settings
+    from {{ project_name|lower }}.data.database import get_db
+    db = await get_db()
     
-    if not client:
+    if not db:
         return None
-    db_name = settings.DATABASE_URL.split('/')[-1] if '/' in settings.DATABASE_URL else "fastforge_db"
-    db = client[db_name]
     
     from motor.motor_asyncio import AsyncIOMotorGridFSBucket
     fs = AsyncIOMotorGridFSBucket(db)

@@ -14,9 +14,23 @@ def write(path, content):
     click.echo(f"  {'created':>10}  {path}")
 
 def init_etl_project(project_name, archi, connector):
-    base = Path("src") / project_name
+    cwd = Path.cwd()
+    project_root = None
+    
+    # Try to find project root (check if we are inside a FastForge project)
+    for p in [cwd, *cwd.parents]:
+        if (p / "src").is_dir() and (p / "pyproject.toml").is_file():
+            project_root = p
+            break
+            
+    if project_root:
+        base = project_root / "src" / project_name
+        click.echo(click.style(f"⚡ Project root detected: {project_root}", fg="blue"))
+    else:
+        base = Path("src") / project_name
+
     if base.exists():
-        click.echo(click.style(f"✗ '{project_name}' already exists in src/.", fg="red"))
+        click.echo(click.style(f"✗ '{project_name}' already exists in {base.parent}/.", fg="red"))
         raise SystemExit(1)
 
     click.echo(click.style(f"\n⚡ FastForge ETL — initializing dbt project '{project_name}'\n", fg="cyan", bold=True))
@@ -58,8 +72,8 @@ def init_etl_project(project_name, archi, connector):
         (base / d).mkdir(parents=True, exist_ok=True)
         write(base / d / ".gitkeep", "")
 
-    click.echo(click.style(f"\n✔ dbt Project '{project_name}' created in src/{project_name}!\n", fg="green", bold=True))
-    click.echo(f"  cd src/{project_name}")
+    click.echo(click.style(f"\n✔ dbt Project '{project_name}' created in {base}!\n", fg="green", bold=True))
+    click.echo(f"  cd {base}")
     if connector == "local":
         click.echo(f"  uv pip install dbt-duckdb")
     elif connector == "snowflake":

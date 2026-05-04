@@ -1,5 +1,5 @@
-from {{ project_name }}.data.actions import make_crud_action, handle_file
-from {{ project_name }}.utils.controller import from_model_to_dict, serialize_model
+from {{ project_name|lower }}.data.actions import make_crud_action, handle_file
+from {{ project_name|lower }}.utils.controller import from_model_to_dict, serialize_model
 from fastapi import UploadFile
 
 class Entity:
