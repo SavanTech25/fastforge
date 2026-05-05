@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from loguru import logger
 import httpx
 from cryptography.fernet import Fernet
-from {{ project_name }}.config import settings
+from {{ project_name|lower }}.config import settings
 
 # Password hashing setup
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

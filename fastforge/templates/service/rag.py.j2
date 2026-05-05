@@ -1,4 +1,5 @@
 import os
+from decouple import config
 {% if provider in ['openai', 'azure'] %}
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 {% elif provider == 'anthropic' %}
@@ -59,6 +60,13 @@ class {{ service_name }}Service:
             collection_name="rag_collection",
             connection=config("SUPABASE_DB_URL"),
             use_jsonb=True,
+        )
+        {% elif vector_store == 'upstash' %}
+        from langchain_community.vectorstores.upstash import UpstashVectorStore
+        self.vector_store = UpstashVectorStore(
+            embedding=self.embeddings,
+            index_url=config("UPSTASH_VECTOR_REST_URL"),
+            index_token=config("UPSTASH_VECTOR_REST_TOKEN")
         )
         {% endif %}
         

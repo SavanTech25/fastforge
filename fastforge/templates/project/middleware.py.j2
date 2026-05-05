@@ -18,7 +18,7 @@ class JWTBearer(HTTPBearer):
 
     def verify_jwt(self, jwtoken: str) -> bool:
         try:
-            payload = jwt.decode(jwtoken, settings.SECRET_KEY, algorithms=["HS256"])
+            payload = jwt.decode(jwtoken, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
             return True
         except Exception as e:
             return False

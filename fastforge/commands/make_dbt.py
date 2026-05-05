@@ -25,16 +25,20 @@ def make_dbt(model_name, is_view, is_incremental, is_python, layer):
         raise SystemExit(1)
         
     src_dir = project_root / "src"
-    project_names = [d.name for d in src_dir.iterdir() if d.is_dir() and d.name not in ("__pycache__",) and not d.name.endswith(".egg-info")]
-    if not project_names:
-        click.echo(click.style("✗ No project package found inside 'src/'.", fg="red"))
+    dbt_project_dir = None
+    for d in src_dir.iterdir():
+        if d.is_dir() and (d / "dbt_project.yml").exists():
+            dbt_project_dir = d
+            break
+            
+    if not dbt_project_dir:
+        click.echo(click.style("✗ Could not find a dbt project (dbt_project.yml) inside 'src/'.", fg="red"))
         raise SystemExit(1)
         
-    project_name = project_names[0]
-    models_dir = src_dir / project_name / "models"
+    models_dir = dbt_project_dir / "models"
     
     if not models_dir.exists():
-        click.echo(click.style(f"✗ 'models' directory not found in src/{project_name}. Is this a dbt project?", fg="red"))
+        click.echo(click.style(f"✗ 'models' directory not found in src/{dbt_project_dir.name}. Is this a dbt project?", fg="red"))
         raise SystemExit(1)
 
     target_dir = models_dir
