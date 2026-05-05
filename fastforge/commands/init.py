@@ -11,7 +11,7 @@ DB_URLS = {
     "mongodb": "mongodb://localhost:27017/dbname",
 }
 
-COMMON_REQS = ["fastapi>=0.110.0","uvicorn[standard]>=0.29.0","pydantic>=2.0.0","pydantic-settings>=2.0.0","cryptography>=42.0.0","passlib[bcrypt]>=1.7.4","python-dotenv>=1.0.0","fastapi-cache2>=0.2.1","PyJWT>=2.8.0","slowapi>=0.1.9","apscheduler>=3.10.4","jinja2>=3.1.3","loguru>=0.7.2","python-multipart>=0.0.9"]
+COMMON_REQS = ["fastapi>=0.110.0","uvicorn[standard]>=0.29.0","pydantic>=2.0.0","pydantic-settings>=2.0.0","cryptography>=42.0.0","passlib[bcrypt]>=1.7.4","python-dotenv>=1.0.0","fastapi-cache2>=0.2.1","PyJWT>=2.8.0","slowapi>=0.1.9","apscheduler>=3.10.4","jinja2>=3.1.3","loguru>=0.7.2","python-multipart>=0.0.9","requests>=2.31.0","httpx>=0.27.0"]
 SQL_REQS = ["sqlalchemy>=2.0.0"]
 
 REQUIREMENTS = {

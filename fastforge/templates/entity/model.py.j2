@@ -9,25 +9,25 @@ class {{ entity_name }}(Entity):
 from sqlalchemy import Column, Integer, String, Boolean, Float, Text{% if has_date %}, Date{% endif %}{% if has_datetime %}, DateTime{% endif %}{% if has_fk %}, ForeignKey{% endif %}
 
 from sqlalchemy.orm import relationship
-from {{ project_name }}.data.database import Base
-{% if has_encrypt %}
-from {{ project_name }}.utils.crypto import encrypt_value, decrypt_value
-{% endif %}
-{% if has_hash %}
-from {{ project_name }}.utils.crypto import hash_value
-{% endif %}
+from {{ project_name }}.entity.base_entity import Entity
 
-class {{ entity_name }}(Base):
+class {{ entity_name }}(Base, Entity):
     __tablename__ = "{{ table_name }}"
     id = Column(Integer, primary_key=True, index=True)
 {% for field in fields %}
 {% if field.foreign_key %}
-    {{ field.fk_column }} = Column(Integer, ForeignKey("{{ field.fk_table }}.id"){% if field.nullable %}, nullable=True{% endif %})
+    {{ field.fk_column }} = Column(Integer, ForeignKey("{{ field.fk_table }}.id"), nullable=True)
     {{ field.name }} = relationship("{{ field.foreign_key }}", back_populates="{{ table_name }}")
 {% else %}
-    _{{ field.name }} = Column("{{ field.name }}", {{ field.sqlalchemy_type }}{% if field.nullable %}, nullable=True{% endif %})
+    _{{ field.name }} = Column("{{ field.name }}", Text, nullable=True)
 {% endif %}
 {% endfor %}
+
+    def __init__(self, db=None, **kwargs):
+        Entity.__init__(self, "{{ entity_name }}", db=db, sql_model={{ entity_name }})
+        # Filter kwargs to only include columns valid for the model
+        valid_kwargs = {k: v for k, v in kwargs.items() if k in self.__table__.columns.keys() or hasattr(self, k)}
+        super().__init__(**valid_kwargs)
 
 {% for field in fields %}
 {% if field.encrypt %}
