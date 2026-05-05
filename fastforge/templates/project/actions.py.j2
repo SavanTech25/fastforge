@@ -105,7 +105,10 @@ def make_crud_action(db: Session, model_class, action: str, **kwargs):
     
     if action == "insert_one":
         document = kwargs.get("document", {})
-        instance = model_class(**document)
+        if isinstance(document, model_class):
+            instance = document
+        else:
+            instance = model_class(**document)
         db.add(instance)
         db.commit()
         db.refresh(instance)
@@ -113,30 +116,40 @@ def make_crud_action(db: Session, model_class, action: str, **kwargs):
         
     elif action == "find_one":
         filter_args = kwargs.get("filter", {})
+        if not filter_args:
+             return None
         query = db.query(model_class)
         for attr, value in filter_args.items():
-            query = query.filter(getattr(model_class, attr) == value)
+            if hasattr(model_class, attr):
+                query = query.filter(getattr(model_class, attr) == value)
         return query.first()
         
     elif action == "update_one":
         filter_args = kwargs.get("filter", {})
         update_args = kwargs.get("update", {}).get("$set", {})
+        
         query = db.query(model_class)
         for attr, value in filter_args.items():
-            query = query.filter(getattr(model_class, attr) == value)
+            if hasattr(model_class, attr):
+                query = query.filter(getattr(model_class, attr) == value)
         instance = query.first()
+        
         if instance:
             for k, v in update_args.items():
-                setattr(instance, k, v)
+                if hasattr(instance, k):
+                    setattr(instance, k, v)
             db.commit()
             db.refresh(instance)
         return instance
         
     elif action == "delete_one":
         filter_args = kwargs.get("filter", {})
+        if not filter_args:
+             return False
         query = db.query(model_class)
         for attr, value in filter_args.items():
-            query = query.filter(getattr(model_class, attr) == value)
+            if hasattr(model_class, attr):
+                query = query.filter(getattr(model_class, attr) == value)
         instance = query.first()
         if instance:
             db.delete(instance)
@@ -146,22 +159,31 @@ def make_crud_action(db: Session, model_class, action: str, **kwargs):
     elif action == "find_all":
         filter_args = kwargs.get("filter", {})
         query = db.query(model_class)
-        for attr, value in filter_args.items():
-            query = query.filter(getattr(model_class, attr) == value)
+        if filter_args:
+            for attr, value in filter_args.items():
+                if hasattr(model_class, attr):
+                    query = query.filter(getattr(model_class, attr) == value)
         return query.all()
         
     elif action == "purge":
         filter_args = kwargs.get("filter", {})
         query = db.query(model_class)
-        for attr, value in filter_args.items():
-            query = query.filter(getattr(model_class, attr) == value)
+        if filter_args:
+            for attr, value in filter_args.items():
+                if hasattr(model_class, attr):
+                    query = query.filter(getattr(model_class, attr) == value)
         count = query.delete()
         db.commit()
         return count
         
     elif action == "insert_many":
         documents = kwargs.get("documents", [])
-        instances = [model_class(**doc) for doc in documents]
+        instances = []
+        for doc in documents:
+            if isinstance(doc, model_class):
+                instances.append(doc)
+            else:
+                instances.append(model_class(**doc))
         db.add_all(instances)
         db.commit()
         for instance in instances:
@@ -172,8 +194,10 @@ def make_crud_action(db: Session, model_class, action: str, **kwargs):
         filter_args = kwargs.get("filter", {})
         update_args = kwargs.get("update", {}).get("$set", {})
         query = db.query(model_class)
-        for attr, value in filter_args.items():
-            query = query.filter(getattr(model_class, attr) == value)
+        if filter_args:
+            for attr, value in filter_args.items():
+                if hasattr(model_class, attr):
+                    query = query.filter(getattr(model_class, attr) == value)
         count = query.update(update_args)
         db.commit()
         return count

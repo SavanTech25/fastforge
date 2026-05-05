@@ -80,6 +80,15 @@ def make_sync_cmd(sync_name, source, dest):
     from fastforge.commands.make_sync import make_sync
     make_sync(sync_name, source, dest)
 
+@cli.command("make:discard")
+@click.argument("entity_name")
+def discard_entity_cmd(entity_name):
+    """
+    Remove entity, schema, controller and router.
+    """
+    from fastforge.commands.discard_entity import discard_entity
+    discard_entity(entity_name)
+
 def main():
     cli()
 
