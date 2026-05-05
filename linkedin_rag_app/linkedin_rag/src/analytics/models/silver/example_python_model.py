@@ -1,0 +1,17 @@
+
+def model(dbt, session):
+    dbt.config(
+        materialized="table"
+    )
+
+    # Example: referencing another model
+    # my_df = dbt.ref("stg_example")
+
+    # Example: returning a pandas dataframe
+    import pandas as pd
+    df = pd.DataFrame({
+        "id": [1, 2],
+        "name": ["example_1", "example_2"]
+    })
+    
+    return df

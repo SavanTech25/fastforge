@@ -112,6 +112,8 @@ def make_service(service_name, service_type, provider, vector_store="chroma"):
             pkgs.extend(["langchain-qdrant", "qdrant-client"])
         elif vector_store == "supabase":
             pkgs.extend(["langchain-postgres", "psycopg[binary]"])
+        elif vector_store == "upstash":
+            pkgs.append("upstash-vector")
             
     if pkgs:
         click.echo(click.style("  ⚠ Remember to install the required dependencies:", fg="yellow"))

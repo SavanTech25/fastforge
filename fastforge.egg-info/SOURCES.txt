@@ -48,6 +48,4 @@ fastforge/templates/service/agentic.py.j2
 fastforge/templates/service/ocr.py.j2
 fastforge/templates/service/r_service.py.j2
 fastforge/templates/service/rag.py.j2
-fastforge/templates/sync/airbyte_readme.md.j2
-fastforge/templates/sync/docker-compose.airbyte.yml.j2
 fastforge/templates/sync/sync_python.py.j2

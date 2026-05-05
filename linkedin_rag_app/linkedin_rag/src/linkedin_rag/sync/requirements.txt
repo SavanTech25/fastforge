@@ -1,0 +1,7 @@
+pymongo
+pandas
+sqlalchemy
+psycopg2-binary
+apscheduler
+python-decouple
+loguru

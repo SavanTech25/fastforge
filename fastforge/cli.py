@@ -62,7 +62,7 @@ def make_dbt_cmd(model_name, view, incremental, python, layer):
 @click.argument("service_name")
 @click.option("--type", "service_type", required=True, type=click.Choice(["rag", "agent", "agentic", "ocr"]), help="Type of AI service")
 @click.option("--provider", required=True, type=click.Choice(["openai", "anthropic", "mistral", "gemini", "azure"]), help="AI Provider to use")
-@click.option("--vector-store", default="chroma", type=click.Choice(["chroma", "qdrant", "supabase"]), help="Vector store (RAG only)")
+@click.option("--vector-store", default="chroma", type=click.Choice(["chroma", "qdrant", "supabase", "upstash"]), help="Vector store (RAG only)")
 def make_service_cmd(service_name, service_type, provider, vector_store):
     """
     Generate an AI service (RAG, Agent, OCR, etc) and its router.
