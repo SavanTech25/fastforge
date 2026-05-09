@@ -11,9 +11,11 @@ from langchain_mistralai import ChatMistralAI, MistralAIEmbeddings
 {% elif provider == 'gemini' %}
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 {% endif %}
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.documents import Document
+from sqlalchemy import text
 
 class {{ service_name }}Service:
     def __init__(self):
@@ -90,3 +92,32 @@ class {{ service_name }}Service:
         )
         
         return await chain.ainvoke(query)
+
+    async def refresh(self, db) -> int:
+        """Fetch rows from mart_post and index them into the vector store."""
+        # 1. Fetch data from mart_post (the gold table)
+        # Note: We assume the gold table has a 'content' column formatted for RAG
+        query = text("SELECT source_id, content, author, url, source FROM mart_post")
+        result = db.execute(query)
+        rows = result.fetchall()
+        
+        documents = []
+        ids = []
+        for row in rows:
+            doc = Document(
+                page_content=row.content or "",
+                metadata={
+                    "source_id": row.source_id,
+                    "author": row.author,
+                    "url": row.url,
+                    "source": row.source
+                }
+            )
+            documents.append(doc)
+            ids.append(row.source_id)
+        
+        if documents:
+            # 2. Index into vector store
+            self.vector_store.add_documents(documents, ids=ids)
+            return len(documents)
+        return 0

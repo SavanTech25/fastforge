@@ -44,6 +44,9 @@ class Entity:
     async def purge(self, filter={}):
         return await make_crud_action(self.__model_name, "purge", filter=filter)
     
+    async def truncate(self, max_records=250, delete_count=50):
+        return await make_crud_action(self.__model_name, "truncate", max_records=max_records, delete_count=delete_count)
+    
     async def getById(self, id):
         from bson.objectid import ObjectId
         result = await make_crud_action(self.__model_name, "find_one", filter={"_id": ObjectId(id)})
@@ -118,6 +121,9 @@ class Entity:
     
     def purge(self, filter={}):
         return make_crud_action(self.__db, self.__sql_model, "purge", filter=filter)
+    
+    def truncate(self, max_records=250, delete_count=50):
+        return make_crud_action(self.__db, self.__sql_model, "truncate", max_records=max_records, delete_count=delete_count)
     
     def getById(self, id):
         return make_crud_action(self.__db, self.__sql_model, "find_one", filter={"id": id})

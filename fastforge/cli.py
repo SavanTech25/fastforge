@@ -4,6 +4,7 @@ from fastforge.commands.init_etl import init_etl_project
 from fastforge.commands.make_entity import make_entity
 from fastforge.commands.make_dbt import make_dbt
 from fastforge.commands.make_service import make_service
+from fastforge.commands.make_dashboard import make_dashboard
 
 @click.group()
 @click.version_option("1.0.0", prog_name="fastforge")
@@ -88,6 +89,17 @@ def discard_entity_cmd(entity_name):
     """
     from fastforge.commands.discard_entity import discard_entity
     discard_entity(entity_name)
+
+@cli.command("make:dashboard")
+@click.argument("pages", nargs=-1)
+def make_dashboard_cmd(pages):
+    """
+    Generate a Streamlit dashboard with custom pages.
+    
+    Example:
+      fastforge make:dashboard Atelier Analytics Chatbot
+    """
+    make_dashboard(pages)
 
 def main():
     cli()
