@@ -1,37 +1,37 @@
 {% if db == "mongodb" %}
 from motor.motor_asyncio import AsyncIOMotorClient
-from {{ project_name|lower }}.config import settings
+from decouple import config
 
 class DataBase:
     client: AsyncIOMotorClient = None
 
 async def connect_to_mongo():
-    DataBase.client = AsyncIOMotorClient(settings.DATABASE_URL)
+    DataBase.client = AsyncIOMotorClient(config("DATABASE_URL", default="mongodb://localhost:27017/dbname"))
 
 async def close_mongo_connection():
     if DataBase.client:
         DataBase.client.close()
 
 async def get_db():
-    # Priority: DB_NAME setting > DATABASE_URL path > default "fastforge_db"
-    if hasattr(settings, "DB_NAME") and settings.DB_NAME:
-        return DataBase.client[settings.DB_NAME]
-    
+    db_name = config("DB_NAME", default="")
+    if db_name:
+        return DataBase.client[db_name]
+
     # Fallback to extracting from URL
-    db_name = "fastforge_db"
-    if "/" in settings.DATABASE_URL:
-        # Remove query parameters if present
-        path_part = settings.DATABASE_URL.split("?")[0]
-        db_name = path_part.split("/")[-1] or "fastforge_db"
-        
+    database_url = config("DATABASE_URL", default="mongodb://localhost:27017/fastforge_db")
+    path_part = database_url.split("?")[0]
+    db_name = path_part.split("/")[-1] or "fastforge_db"
     return DataBase.client[db_name]
 {% else %}
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from {{ project_name|lower }}.config import settings
+from decouple import config
 
-engine = create_engine(settings.DATABASE_URL{% if db == "sqlite" %}, connect_args={"check_same_thread": False}{% endif %})
+engine = create_engine(
+    config("DATABASE_URL", default="{{ db_url }}"),
+    {% if db == "sqlite" %}connect_args={"check_same_thread": False}{% endif %}
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

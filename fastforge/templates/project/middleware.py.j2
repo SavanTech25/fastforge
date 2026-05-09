@@ -1,7 +1,7 @@
 from fastapi.security import HTTPBearer
 from fastapi import Request, HTTPException
 import jwt
-from {{ project_name|lower }}.config import settings
+from decouple import config
 
 class JWTBearer(HTTPBearer):
     def __init__(self, auto_error: bool = True):
@@ -18,7 +18,11 @@ class JWTBearer(HTTPBearer):
 
     def verify_jwt(self, jwtoken: str) -> bool:
         try:
-            payload = jwt.decode(jwtoken, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            jwt.decode(
+                jwtoken,
+                config("SECRET_KEY", default="change-me-in-production"),
+                algorithms=[config("ALGORITHM", default="HS256")]
+            )
             return True
-        except Exception as e:
+        except Exception:
             return False

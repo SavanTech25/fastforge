@@ -6,7 +6,7 @@ from loguru import logger
 # MongoDB Actions implementation
 actions = [
     "insert_one", "delete_one", "find_one", "update_one", "find_all",
-    "purge", "insert_many", "update_many"
+    "purge", "insert_many", "update_many", "truncate"
 ]
 
 async def make_crud_action(tablename: str, action: str, **kwargs):
@@ -39,6 +39,18 @@ async def make_crud_action(tablename: str, action: str, **kwargs):
         return await collection.insert_many(kwargs.get("documents", []))
     elif action == "update_many":
         return await collection.update_many(kwargs.get("filter", {}), kwargs.get("update", {}))
+    elif action == "truncate":
+        max_records = kwargs.get("max_records", 250)
+        delete_count = kwargs.get("delete_count", 50)
+        count = await collection.count_documents({})
+        if count > max_records:
+            # Delete the oldest N records based on _id
+            oldest = await collection.find({}, {"_id": 1}).sort("_id", 1).limit(delete_count).to_list(length=None)
+            if oldest:
+                ids = [doc["_id"] for doc in oldest]
+                res = await collection.delete_many({"_id": {"$in": ids}})
+                return res.deleted_count
+        return 0
 
 async def handle_file(action: str, file: UploadFile = None, file_content: bytes = None, filename: str = "", id: str = ""):
     if action not in actions:
@@ -96,7 +108,7 @@ import shutil
 
 actions = [
     "insert_one", "delete_one", "find_one", "update_one", "find_all",
-    "purge", "insert_many", "update_many"
+    "purge", "insert_many", "update_many", "truncate"
 ]
 
 def make_crud_action(db: Session, model_class, action: str, **kwargs):
@@ -201,6 +213,21 @@ def make_crud_action(db: Session, model_class, action: str, **kwargs):
         count = query.update(update_args)
         db.commit()
         return count
+        
+    elif action == "truncate":
+        max_records = kwargs.get("max_records", 250)
+        delete_count = kwargs.get("delete_count", 50)
+        
+        total_count = db.query(model_class).count()
+        if total_count > max_records:
+            # Subquery to find the IDs of the oldest records
+            oldest_ids = db.query(model_class.id).order_by(model_class.id.asc()).limit(delete_count).all()
+            if oldest_ids:
+                ids_to_delete = [i[0] for i in oldest_ids]
+                deleted_count = db.query(model_class).filter(model_class.id.in_(ids_to_delete)).delete(synchronize_session=False)
+                db.commit()
+                return deleted_count
+        return 0
 
 UPLOAD_DIR = "static/uploads"
 

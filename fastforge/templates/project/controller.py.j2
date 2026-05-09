@@ -4,15 +4,16 @@ from fastapi import HTTPException
 from loguru import logger
 import httpx
 from cryptography.fernet import Fernet
-from {{ project_name|lower }}.config import settings
+from decouple import config
 
 # Password hashing setup
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 fernet = None
-if settings.FERNET_KEY:
+_fernet_key = config("FERNET_KEY", default="")
+if _fernet_key:
     try:
-        fernet = Fernet(settings.FERNET_KEY.encode())
+        fernet = Fernet(_fernet_key.encode())
     except Exception as e:
         logger.warning(f"Could not initialize Fernet: {e}")
 
@@ -24,11 +25,10 @@ def from_model_to_dict(model):
     if hasattr(model, "dict"):
         return model.dict()
     if hasattr(model, "__table__"):
-        # For SQLAlchemy models, extract columns. 
+        # For SQLAlchemy models, extract columns.
         # Handle the case where attributes might be prefixed (like _auteur)
         result = {}
         for column in model.__table__.columns:
-            # Try getting by attribute name (which matches column name or _prefixed name)
             attr_name = next((k for k, v in model.__class__.__dict__.items() if hasattr(v, "expression") and getattr(v.expression, "name", None) == column.name), column.name)
             if hasattr(model, attr_name):
                 result[column.name] = getattr(model, attr_name)
