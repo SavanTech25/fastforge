@@ -14,7 +14,7 @@ clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
 
 format:
-	uvx ruff format fastforge/
+	uvx ruff format fast-stack-forge/
 
 test:
 	uv run pytest

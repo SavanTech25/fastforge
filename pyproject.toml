@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fastforge"
+name = "fast-stack-forge"
 version = "1.0.0"
-description = "CLI toolkit - FastAPI and dbt"
+description = "CLI toolkit - Create FastAPI and dbt applications quickly"
 requires-python = ">=3.11"
 dependencies = [
     "click>=8.1.0",
@@ -13,11 +13,11 @@ dependencies = [
 ]
 
 [project.scripts]
-fastforge = "fastforge.cli:main"
+fast-stack-forge = "fast_stack_forge.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["fastforge*"]
+include = ["fast_stack_forge*"]
 
 [tool.setuptools.package-data]
-fastforge = ["templates/**/*.j2"]
+fast_stack_forge = ["templates/**/*.j2"]
