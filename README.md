@@ -1,14 +1,28 @@
-# ⚡ FastForge
+# ⚡ fast-stack-forge
+
+[![PyPI version](https://badge.fury.io/py/fast-stack-forge.svg)](https://badge.fury.io/py/fast-stack-forge)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 FastForge is a powerful, Symfony-style CLI scaffolder designed to bootstrap and accelerate the development of FastAPI applications. It provides a robust, production-ready directory structure, fully integrated with `uv` for lightning-fast package management, alongside essential utilities like rate limiting, scheduling, WebSocket management, and JWT middleware.
+
+## ✨ Features
+
+- **Rapid Scaffolding**: Generate full FastAPI projects with a single command.
+- **Entity Generation**: Automatically create models, schemas, controllers, and routers for your database entities.
+- **AI Service Integration**: Instantly scaffold RAG, Agentic, and OCR services powered by LLMs (OpenAI, Anthropic, Mistral, Azure).
+- **dbt Support**: Built-in commands to initialize and manage analytical engineering pipelines.
+- **Data Sync**: Generate ELT scripts to sync NoSQL databases (like MongoDB) to relational databases (like PostgreSQL).
+- **Production-Ready**: Includes pre-configured JWT middleware, rate limiting (slowapi), background scheduling (apscheduler), and WebSockets.
 
 ## 🚀 Installation
 
 Since FastForge manages virtual environments and dependencies via `uv`, you should install it globally using `uv tool`:
 
 ```bash
-uv tool install git+https://github.com/SavanTech25/fast_stack_forge.git
+uv tool install fast-stack-forge
 ```
+
+*(Alternatively, you can install from source: `uv tool install git+https://github.com/SavanTech25/fast-stack-forge.git`)*
 
 ## 🛠️ Usage
 
@@ -69,6 +83,7 @@ fast-stack-forge make:dbt fact_user --view --incremental --layer silver
 ```
 - **`--view`**: Sets materialization to `view`.
 - **`--incremental`**: Configures incremental logic automatically.
+
 ### 5. Generate AI Services
 
 FastForge includes a powerful `make:service` command that instantly scaffolds production-ready AI services (RAG, Agents, OCR) connected directly to your FastAPI routes.
@@ -103,35 +118,29 @@ When you initialize a project with FastForge, it generates a clean, modular stru
 
 ### Generated Directory Structure
 
-```mermaid
-graph TD
-    A[my_project] --> B(Makefile)
-    A --> C(pyproject.toml)
-    A --> D(README.md)
-    A --> E[app]
-    A --> F[src]
+*(Note: PyPI does not support Mermaid diagrams natively, so here is the ASCII representation of the architecture)*
 
-    E --> G[main.py]
-
-    F --> H[my_project]
-    H --> I[entity/]
-    H --> J[schema/]
-    H --> K[controller/]
-    H --> L[router/]
-    H --> M[service/]
-    H --> N[data/]
-    H --> O[middleware/]
-    H --> P[utils/]
-
-    O -.->|Contains| O1[middleware.py JWTBearer]
-    P -.->|Contains| P1[connection_manager.py]
-    P -.->|Contains| P2[limiter.py]
-    P -.->|Contains| P3[scheduling.py]
-    P -.->|Contains| P4[crud_router.py]
-    N -.->|Contains| N1[database.py]
-    G -.->|Imports| N1
-    G -.->|Imports| P2
-    G -.->|Imports| P3
+```text
+my_project/
+├── Makefile
+├── pyproject.toml
+├── README.md
+├── app/
+│   └── main.py          <-- FastAPI entry point, imports db & limiter
+└── src/
+    └── my_project/
+        ├── controller/  <-- Business logic
+        ├── data/        <-- database.py
+        ├── entity/      <-- ORM Models
+        ├── middleware/  <-- middleware.py (JWTBearer)
+        ├── router/      <-- API Routes
+        ├── schema/      <-- Pydantic Models
+        ├── service/     <-- Generated AI Services
+        └── utils/
+            ├── connection_manager.py
+            ├── crud_router.py
+            ├── limiter.py
+            └── scheduling.py
 ```
 
 ### Explanation of Components
@@ -149,3 +158,9 @@ graph TD
     - `scheduling.py`: Asynchronous background task scheduler via `apscheduler`.
     - `connection_manager.py`: Generic WebSocket manager.
     - `crud_router.py`: A generic factory for building standard CRUD routes effortlessly.
+
+## 🤝 Contributing
+Contributions are welcome! Feel free to open an issue or submit a pull request if you have ideas for new features or improvements.
+
+## 📄 License
+This project is licensed under the MIT License.

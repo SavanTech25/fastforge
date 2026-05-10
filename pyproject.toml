@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fast-stack-forge"
-version = "1.0.1"
-description = "CLI toolkit - Create FastAPI and dbt applications quickly"
+version = "1.0.2"
+description = "CLI toolkit - Create FastAPI, dbt, AI services and more applications quickly"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
