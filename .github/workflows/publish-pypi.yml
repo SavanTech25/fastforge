@@ -32,11 +32,11 @@ jobs:
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          # Note: We are using Trusted Publishing (OIDC) which is recommended by PyPI.
-          # To use this, you must configure a pending publisher on PyPI for this GitHub repository.
-          # See: https://docs.pypi.org/trusted-publishers/
-          
-          # If you prefer to use an API token instead, uncomment the line below
-          # and add a PYPI_API_TOKEN to your GitHub repository secrets.
-          # password: ${{ secrets.PYPI_API_TOKEN }}
+        # Note: We are using Trusted Publishing (OIDC) which is recommended by PyPI.
+        # To use this, you must configure a pending publisher on PyPI for this GitHub repository.
+        # See: https://docs.pypi.org/trusted-publishers/
+        
+        # If you prefer to use an API token instead, uncomment the lines below
+        # and add a PYPI_API_TOKEN to your GitHub repository secrets.
+        # with:
+        #   password: ${{ secrets.PYPI_API_TOKEN }}
