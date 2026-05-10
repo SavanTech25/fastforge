@@ -24,7 +24,7 @@ wheels = [
 ]
 
 [[package]]
-name = "fastforge"
+name = "fast-stack-forge"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [

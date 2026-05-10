@@ -7,7 +7,7 @@ FastForge is a powerful, Symfony-style CLI scaffolder designed to bootstrap and 
 Since FastForge manages virtual environments and dependencies via `uv`, you should install it globally using `uv tool`:
 
 ```bash
-uv tool install git+https://github.com/SavanTech25/fastforge.git
+uv tool install git+https://github.com/SavanTech25/fast_stack_forge.git
 ```
 
 ## 🛠️ Usage
@@ -17,7 +17,7 @@ uv tool install git+https://github.com/SavanTech25/fastforge.git
 To bootstrap a new project, use the `init` command. You can specify your preferred database engine (`sqlite`, `postgresql`, `mysql`, or `mongodb`).
 
 ```bash
-fastforge init my_project --db mongodb
+fast-stack-forge init my_project --db mongodb
 ```
 
 This will create a structured FastAPI project that utilizes `pyproject.toml` and a `Makefile` for streamlined development.
@@ -43,7 +43,7 @@ make run
 FastForge features a `make:entity` command that automatically generates your boilerplate code for a given entity. Make sure you run this from the root of your newly created project!
 
 ```bash
-fastforge make:entity User name:string age:int email:string:hash is_active:bool
+fast-stack-forge make:entity User name:string age:int email:string:hash is_active:bool
 ```
 
 **Field Syntax:** `name:type[:modifier]`
@@ -57,7 +57,7 @@ FastForge now includes native scaffolding for analytical engineering via **dbt**
 To initialize a complete dbt project package inside your `src/` directory:
 
 ```bash
-fastforge init:etl my_dbt_project --archi medallion --connector local
+fast-stack-forge init:etl my_dbt_project --archi medallion --connector local
 ```
 - **`--archi`**: Choose `default` (stg, int, mart), `medallion` (bronze, silver, gold), or `star` (raw, dim, fact).
 - **`--connector`**: Choose `local` (DuckDB), `snowflake`, `bigquery`, or `postgres`.
@@ -65,7 +65,7 @@ fastforge init:etl my_dbt_project --archi medallion --connector local
 To quickly scaffold a dbt model inside your project without boilerplate:
 
 ```bash
-fastforge make:dbt fact_user --view --incremental --layer silver
+fast-stack-forge make:dbt fact_user --view --incremental --layer silver
 ```
 - **`--view`**: Sets materialization to `view`.
 - **`--incremental`**: Configures incremental logic automatically.
@@ -74,7 +74,7 @@ fastforge make:dbt fact_user --view --incremental --layer silver
 FastForge includes a powerful `make:service` command that instantly scaffolds production-ready AI services (RAG, Agents, OCR) connected directly to your FastAPI routes.
 
 ```bash
-fastforge make:service DocumentOCR --type ocr --provider azure
+fast-stack-forge make:service DocumentOCR --type ocr --provider azure
 ```
 
 **Options:**
@@ -84,7 +84,7 @@ fastforge make:service DocumentOCR --type ocr --provider azure
 
 **Example: Building a fully-functional RAG service with Qdrant and OpenAI**
 ```bash
-fastforge make:service HelpdeskBot --type rag --provider openai --vector-store qdrant
+fast-stack-forge make:service HelpdeskBot --type rag --provider openai --vector-store qdrant
 ```
 This generates the `HelpdeskBotService` integrated with `langchain-openai`, `langchain-qdrant`, and automatically exposes a `POST /helpdeskbot` endpoint with JWT authentication in your FastAPI app!
 
@@ -93,7 +93,7 @@ This generates the `HelpdeskBotService` integrated with `langchain-openai`, `lan
 To support the standard dbt architecture (where your operational database needs to be replicated to your analytical database), you can use the `make:sync` command.
 
 ```bash
-fastforge make:sync MongoToPg --source mongodb --dest postgres
+fast-stack-forge make:sync MongoToPg --source mongodb --dest postgres
 ```
 This scaffolds a pure-Python sync script utilizing `pymongo`, `pandas`, and `sqlalchemy`. The generated script handles flattening NoSQL documents and automatically syncing them to PostgreSQL, with built-in `APScheduler` boilerplate for continuous execution.
 
