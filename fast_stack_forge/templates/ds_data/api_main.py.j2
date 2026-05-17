@@ -1,0 +1,52 @@
+"""Main entry point for the FastAPI application."""
+
+from pathlib import Path
+from fastapi import FastAPI
+from decouple import config
+
+from {{ package_name }}.api.middlewares.upload import LimitUploadSizeMiddleware
+from {{ package_name }}.api.routers import base, greetings, system
+
+
+def get_project_version() -> str:
+    """Read version from VERSION file at project root."""
+    for path in [
+        Path(__file__).parent.parent.parent.parent / "VERSION",
+        Path(__file__).parent.parent.parent / "VERSION",
+        Path(__file__).parent.parent / "VERSION",
+    ]:
+        if path.exists():
+            return path.read_text().strip()
+    return "0.1.0"
+
+
+app = FastAPI(
+    title="{{ package_name }}",
+    description="{{ description }}",
+    version=get_project_version(),
+)
+
+# Upload size limit middleware
+app.add_middleware(LimitUploadSizeMiddleware)
+
+app.include_router(base.router)
+app.include_router(system.router)
+app.include_router(greetings.router)
+
+
+def main() -> None:  # pragma: no cover
+    """Run the FastAPI application using uvicorn."""
+    import uvicorn
+
+    host = config("API_HOST", default="0.0.0.0")
+    port = config("API_PORT", default=8000, cast=int)
+    uvicorn.run(
+        "{{ package_name }}.api.main:app",
+        host=host,
+        port=port,
+        reload=True,
+    )
+
+
+if __name__ == "__main__":
+    main()

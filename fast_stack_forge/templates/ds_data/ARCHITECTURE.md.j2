@@ -1,0 +1,28 @@
+# Architecture — {{ repo_name }}
+
+## Overview
+
+This project follows the **AstroData Data Science Skeleton** structure, powered by **FastForge ⚡**.
+
+## Components
+
+| Layer           | Path                              | Role                                      |
+|-----------------|-----------------------------------|-------------------------------------------|
+| FastAPI         | `src/{{ package_name }}/api/`     | REST API with OpenAPI docs                |
+| Streamlit       | `app/streamlit_app.py`            | Interactive data dashboard                |
+| Core            | `src/{{ package_name }}/core/`    | Shared utilities, config, version         |
+| Data            | `src/{{ package_name }}/data/`    | ETL / ingestion pipelines                 |
+| Features        | `src/{{ package_name }}/features/`| Feature engineering                       |
+| Models          | `src/{{ package_name }}/models/`  | Training and inference                    |
+| Visualization   | `src/{{ package_name }}/visualization/` | Plotting helpers                    |
+| Tests           | `tests/`                          | Unit & integration tests (pytest)         |
+
+## Data Flow
+
+```
+raw/ → ETL (data/) → interim/ → features/ → processed/ → models/ → API / Streamlit
+```
+
+## CI/CD
+
+Pre-configured for both **GitHub Actions** and **GitLab CI**.

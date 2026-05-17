@@ -1,0 +1,10 @@
+"""Greetings router — demo endpoint."""
+
+from fastapi import APIRouter
+
+router = APIRouter(prefix="/greetings", tags=["Greetings"])
+
+
+@router.get("/hello", summary="Say hello")
+async def hello(name: str = "world") -> dict:
+    return {"message": f"Hello, {name}! — {{ package_name }} API"}

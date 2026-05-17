@@ -5,6 +5,8 @@ from fast_stack_forge.commands.make_entity import make_entity
 from fast_stack_forge.commands.make_dbt import make_dbt
 from fast_stack_forge.commands.make_service import make_service
 from fast_stack_forge.commands.make_dashboard import make_dashboard
+from fast_stack_forge.commands.init_ds_data import init_ds_data_project
+from fast_stack_forge.commands.init_ds_make import init_ds_make
 
 @click.group()
 @click.version_option("1.0.0", prog_name="fast-stack-forge")
@@ -100,6 +102,54 @@ def make_dashboard_cmd(pages):
       fast-stack-forge make:dashboard Atelier Analytics Chatbot
     """
     make_dashboard(pages)
+
+@cli.command("init:ds-data")
+@click.argument("package_name")
+@click.option("--api/--no-api", default=False, help="Include FastAPI skeleton inside the DS project (default: no)")
+@click.option("--data/--no-data", default=False, help="Include ETL data folders raw/interim/processed/external (default: no)")
+def init_ds_data(package_name, api, data):
+    """
+    Initialize an AstroData data science project.
+
+    \b
+    Features:
+      - Interactive Python version selector (latest, latest-1, latest-2)
+      - Open-source license (MIT, BSD-3-Clause, Apache-2.0, GPL-3.0)
+      - Optional description & author
+      - Name auto-sanitized: "test of test" → "test_of_test"
+      - Asks if you want a companion FastAPI project (named <name>_api)
+      - Uses loguru (no log files), python-decouple for config
+
+    \b
+    Flags:
+      --api     Include FastAPI files inside src/<name>/api/
+      --data    Create ETL data/ folders (raw, interim, processed, external)
+
+    \b
+    Example:
+      fast-stack-forge init:ds-data my_project
+      fast-stack-forge init:ds-data "test of test" --api --data
+    """
+    init_ds_data_project(package_name, include_api=api, include_data=data)
+
+
+@cli.command("init:ds-make")
+@click.argument("project_dir", default=".", required=False)
+def init_ds_make_cmd(project_dir):
+    """
+    Add FastAPI + Streamlit skeleton to an existing AstroData DS project.
+
+    \b
+    Run from the project root (or pass the path as argument).
+    Detects the package name from src/ automatically.
+
+    \b
+    Example:
+      cd my_project && fast-stack-forge init:ds-make
+      fast-stack-forge init:ds-make ./my_project
+    """
+    init_ds_make(project_dir)
+
 
 def main():
     cli()

@@ -11,7 +11,23 @@ DB_URLS = {
     "mongodb": "mongodb://localhost:27017/dbname",
 }
 
-COMMON_REQS = ["fastapi>=0.110.0","uvicorn[standard]>=0.29.0","pydantic>=2.0.0","python-decouple>=3.8","cryptography>=42.0.0","passlib[bcrypt]>=1.7.4","fastapi-cache2>=0.2.1","PyJWT>=2.8.0","slowapi>=0.1.9","apscheduler>=3.10.4","jinja2>=3.1.3","loguru>=0.7.2","python-multipart>=0.0.9","requests>=2.31.0","httpx>=0.27.0"]
+COMMON_REQS = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "pydantic>=2.0.0",
+    "python-decouple>=3.8",
+    "cryptography>=42.0.0",
+    "passlib[bcrypt]>=1.7.4",
+    "fastapi-cache2>=0.2.1",
+    "PyJWT>=2.8.0",
+    "slowapi>=0.1.9",
+    "apscheduler>=3.10.4",
+    "jinja2>=3.1.3",
+    "loguru>=0.7.2",
+    "python-multipart>=0.0.9",
+    "requests>=2.31.0",
+    "httpx>=0.27.0",
+]
 SQL_REQS = ["sqlalchemy>=2.0.0"]
 
 REQUIREMENTS = {
@@ -21,27 +37,119 @@ REQUIREMENTS = {
     "mongodb": COMMON_REQS + ["motor>=3.3.0"],
 }
 
+
 def render(template_name, context):
     env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR / "project")))
     return env.get_template(template_name).render(**context)
+
 
 def write(path, content):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content)
     click.echo(f"  {'created':>10}  {path}")
 
-def init_project(project_name, db):
-    base = Path(project_name)
-    if base.exists():
-        click.echo(click.style(f"✗ '{project_name}' already exists.", fg="red"))
-        raise SystemExit(1)
 
-    click.echo(click.style(f"\n⚡ FastForge — initializing '{project_name}'\n", fg="cyan", bold=True))
+def merge_pyproject_deps_and_scripts(pyproject_path: Path, dependencies: list, scripts: dict = None) -> None:
+    if not pyproject_path.exists():
+        return
+    
+    text = pyproject_path.read_text()
+    lines = text.splitlines()
+    
+    # 1. Merge dependencies
+    deps_start = -1
+    deps_end = -1
+    for idx, line in enumerate(lines):
+        if line.strip().startswith("dependencies = ["):
+            deps_start = idx
+            break
+            
+    if deps_start != -1:
+        for idx in range(deps_start, len(lines)):
+            if "]" in lines[idx]:
+                deps_end = idx
+                break
+                
+    if deps_start != -1 and deps_end != -1:
+        existing_deps = set()
+        for idx in range(deps_start + 1, deps_end):
+            dep_str = lines[idx].strip().strip(",").strip('"').strip("'").strip()
+            if dep_str:
+                existing_deps.add(dep_str.split(">=")[0].split("==")[0].split("<=")[0].strip())
+                
+        deps_to_add = []
+        for dep in dependencies:
+            dep_name = dep.split(">=")[0].split("==")[0].split("<=")[0].strip()
+            if dep_name not in existing_deps:
+                deps_to_add.append(f'    "{dep}",')
+                
+        if deps_to_add:
+            for dep in reversed(deps_to_add):
+                lines.insert(deps_start + 1, dep)
+                
+    # 2. Merge scripts under [project.scripts]
+    if scripts:
+        scripts_idx = -1
+        for idx, line in enumerate(lines):
+            if line.strip() == "[project.scripts]":
+                scripts_idx = idx
+                break
+                
+        if scripts_idx != -1:
+            for name, entrypoint in scripts.items():
+                script_line = f'{name} = "{entrypoint}"'
+                if script_line not in text:
+                    lines.insert(scripts_idx + 1, script_line)
+        else:
+            lines.append("")
+            lines.append("[project.scripts]")
+            for name, entrypoint in scripts.items():
+                lines.append(f'{name} = "{entrypoint}"')
+                
+    pyproject_path.write_text("\n".join(lines) + "\n")
+    click.echo(f"  {'updated':>10}  {pyproject_path} (merged dependencies & scripts)")
+
+
+def merge_makefile_targets(makefile_path: Path, new_targets: str) -> None:
+    if not makefile_path.exists():
+        return
+    text = makefile_path.read_text()
+    signature = new_targets.strip().splitlines()[0]
+    if signature not in text:
+        makefile_path.write_text(text + "\n\n" + new_targets + "\n")
+        click.echo(f"  {'updated':>10}  {makefile_path} (appended custom make targets)")
+
+
+def init_project(project_name, db):
+    cwd = Path.cwd()
+    project_root = None
+    
+    # Try to find project root (check if we are inside a FastForge project)
+    for p in [cwd, *cwd.parents]:
+        if (p / "src").is_dir() and (p / "pyproject.toml").is_file():
+            project_root = p
+            break
+            
+    if project_root:
+        base = project_root
+        click.echo(click.style(f"⚡ Project root detected: {project_root}", fg="blue"))
+    else:
+        base = Path(project_name)
+        if base.exists():
+            click.echo(click.style(f"✗ '{project_name}' already exists.", fg="red"))
+            raise SystemExit(1)
+
+    click.echo(click.style(f"\n⚡ FastForge — initializing FastAPI package '{project_name}'\n", fg="cyan", bold=True))
     ctx = {"project_name": project_name, "db": db, "db_url": DB_URLS[db], "requirements": REQUIREMENTS[db]}
 
     pkg_name = project_name.lower()
 
-    write(base / "app/main.py", render("main.py.j2", ctx))
+    # Determine main file (if app/main.py exists, use a package-specific entry point)
+    main_file = base / "app" / "main.py"
+    if main_file.exists():
+        main_file = base / "app" / f"{pkg_name}_main.py"
+    
+    write(main_file, render("main.py.j2", ctx))
     write(base / f"src/{pkg_name}/data/database.py", render("database.py.j2", ctx))
     write(base / f"src/{pkg_name}/utils/crypto.py", render("crypto.py.j2", ctx))
     write(base / f"src/{pkg_name}/utils/connection_manager.py", render("connection_manager.py.j2", ctx))
@@ -67,36 +175,58 @@ def init_project(project_name, db):
     ]:
         write(base / pkg / "__init__.py", "")
 
-    write(base / "pyproject.toml", render("pyproject.toml.j2", ctx))
-    write(base / "Makefile", render("Makefile.j2", ctx))
-    write(base / ".env", (
-        "# ── Database ──────────────────────────────────────────────────────────────────\n"
-        f"DATABASE_URL={DB_URLS[db]}\n\n"
-        "# ── Security ──────────────────────────────────────────────────────────────────\n"
-        "SECRET_KEY=change-me-in-production\n"
-        "FERNET_KEY=\n\n"
-        "# ── JWT & Auth ─────────────────────────────────────────────────────────────────\n"
-        "ALGORITHM=HS256\n"
-        "ACCESS_TOKEN_EXPIRE_MINUTES=43200\n\n"
-        "# ── App Settings ───────────────────────────────────────────────────────────────\n"
-        "DB_NAME=\n"
-        "ALLOW_ORIGIN=*\n"
-        "WORKERS=4\n"
-        "PORT=8000\n\n"
-        "# ── Postgres / Supabase ────────────────────────────────────────────────────────\n"
-        "POSTGRES_HOST=\n"
-        "POSTGRES_PORT=5432\n"
-        "POSTGRES_USER=\n"
-        "POSTGRES_PASSWORD=\n"
-        "POSTGRES_DB=\n"
-        "POSTGRES_URL=\n\n"
-        "# ── AI / Vector DB ─────────────────────────────────────────────────────────────\n"
-        "UPSTASH_VECTOR_REST_URL=\n"
-        "UPSTASH_VECTOR_REST_TOKEN=\n"
-        "MISTRAL_API_KEY=\n"
-    ))
-    write(base / ".gitignore", "__pycache__/\n*.pyc\n.env\n*.db\n.venv/\n")
-    write(base / "README.md", f"# {project_name}\n\nGenerated by **FastForge ⚡**\n\n## Setup & Run\n\n```bash\nmake install\nsource .venv/bin/activate\nmake run\n```\n")
+    # If it's a new project, write pyproject.toml and other root files
+    if not project_root:
+        write(base / "pyproject.toml", render("pyproject.toml.j2", ctx))
+        write(base / "Makefile", render("Makefile.j2", ctx))
+        write(base / ".env", (
+            "# ── Database ──────────────────────────────────────────────────────────────────\n"
+            f"DATABASE_URL={DB_URLS[db]}\n\n"
+            "# ── Security ──────────────────────────────────────────────────────────────────\n"
+            "SECRET_KEY=change-me-in-production\n"
+            "FERNET_KEY=\n\n"
+            "# ── JWT & Auth ─────────────────────────────────────────────────────────────────\n"
+            "ALGORITHM=HS256\n"
+            "ACCESS_TOKEN_EXPIRE_MINUTES=43200\n\n"
+            "# ── App Settings ───────────────────────────────────────────────────────────────\n"
+            "DB_NAME=\n"
+            "ALLOW_ORIGIN=*\n"
+            "WORKERS=4\n"
+            "PORT=8000\n\n"
+            "# ── Postgres / Supabase ────────────────────────────────────────────────────────\n"
+            "POSTGRES_HOST=\n"
+            "POSTGRES_PORT=5432\n"
+            "POSTGRES_USER=\n"
+            "POSTGRES_PASSWORD=\n"
+            "POSTGRES_DB=\n"
+            "POSTGRES_URL=\n\n"
+            "# ── AI / Vector DB ─────────────────────────────────────────────────────────────\n"
+            "UPSTASH_VECTOR_REST_URL=\n"
+            "UPSTASH_VECTOR_REST_TOKEN=\n"
+            "MISTRAL_API_KEY=\n"
+        ))
+        write(base / ".gitignore", "__pycache__/\n*.pyc\n.env\n*.db\n.venv/\n")
+        write(base / "README.md", f"# {project_name}\n\nGenerated by **FastForge ⚡**\n\n## Setup & Run\n\n```bash\nmake install\nsource .venv/bin/activate\nmake run\n```\n")
+    else:
+        # If it's an existing project, merge requirements and scripts into existing pyproject.toml
+        merge_pyproject_deps_and_scripts(
+            base / "pyproject.toml",
+            REQUIREMENTS[db],
+            {f"{pkg_name}-api": f"app.{pkg_name}_main:main" if main_file.name != "main.py" else "app.main:main"}
+        )
+        
+        # Merge database URL into .env if present
+        env_file = base / ".env"
+        if env_file.exists():
+            env_text = env_file.read_text()
+            db_env_key = f"{pkg_name.upper()}_DATABASE_URL"
+            if db_env_key not in env_text:
+                env_file.write_text(env_text + f"\n{db_env_key}={DB_URLS[db]}\n")
+                click.echo(f"  {'updated':>10}  {env_file} (added {db_env_key})")
+
+        # Append Makefile target
+        run_target = f"run_{pkg_name}:\n\tuv run uvicorn app.{pkg_name}_main:app --reload --port 8000" if main_file.name != "main.py" else "run:\n\tuv run uvicorn app.main:app --reload --port 8000"
+        merge_makefile_targets(base / "Makefile", run_target)
 
     import os
     from fast_stack_forge.commands.make_entity import make_entity
@@ -111,7 +241,3 @@ def init_project(project_name, db):
     os.chdir(original_dir)
 
     click.echo(click.style(f"\n✔ Project '{project_name}' created!\n", fg="green", bold=True))
-    click.echo(f"  cd {project_name}")
-    click.echo(f"  make install")
-    click.echo(f"  source .venv/bin/activate")
-    click.echo(f"  fast-stack-forge make:entity User nom:string pwd:string:hash\n")

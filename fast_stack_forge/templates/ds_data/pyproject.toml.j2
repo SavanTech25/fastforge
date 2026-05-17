@@ -1,0 +1,114 @@
+[project]
+name = "{{ package_name }}"
+version = "0.1.0"
+description = "{{ description }}"
+readme = "README.md"
+license = { text = "{{ open_source_license }}" }
+authors = [
+{% if author_name %}
+    { name = "{{ author_name }}", email = "{{ author_email }}" },
+{% endif %}
+]
+maintainers = [
+{% if author_name %}
+    { name = "{{ author_name }}", email = "{{ author_email }}" },
+{% endif %}
+]
+keywords = ["python", "astrodata", "data-science"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+requires-python = ">={{ python_version }}"
+
+dependencies = [
+    "loguru>=0.7.3",
+    "pretty-errors>=1.2.25",
+    "python-decouple>=3.8",
+    "streamlit==1.42.0",
+    "pygwalker>=0.4.9",
+    "openpyxl>=3.1.5",
+    "pandas>=2.2.0",
+    "matplotlib>=3.8.0",
+    "ipykernel>=6.29.0",
+    "httpx>=0.27.0",
+    "python-multipart>=0.0.9",
+{% if include_api %}
+    "fastapi>=0.111",
+    "uvicorn>=0.30",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.2.0",
+{% endif %}
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.14.0",
+    "ruff>=0.3.0",
+    "mypy>=1.9.0",
+    "pre-commit>=3.6.0",
+    "gitingest>=0.1.5",
+    "commitizen>=4.8.3",
+    "pip-licenses>=5.0.0",
+]
+
+[project.scripts]
+{{ package_name }}-app = "app.{{ package_name }}_app:main"
+{% if include_api %}
+{{ package_name }}-api = "{{ package_name }}.api.main:main"
+{% endif %}
+
+[build-system]
+requires = ["setuptools>=68.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+packages = { find = { where = ["src"] } }
+
+[tool.ruff]
+line-length = 120
+lint.select = ["F", "E", "W", "B", "I", "UP", "SIM"]
+lint.ignore = ["D107", "D203", "D213", "C901", "ERA001"]
+
+[tool.ruff.format]
+indent-style = "space"
+docstring-code-format = true
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = [
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=xml:coverage.xml",
+    "--junitxml=report.xml",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+]
+omit = ["**/__init__.py"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+tag_format = "v$version"
+version_files = ["VERSION", "pyproject.toml:^version ="]
+bump_message = "chore(release): bump version $current_version → $new_version"
+update_changelog_on_bump = true
+changelog_incremental = true
+pre_bump_hooks = ["uv sync", "git add uv.lock"]
+changelog_file = "CHANGELOG.md"
+
+[project.urls]
+homepage = "{{ project_url }}"

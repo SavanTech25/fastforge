@@ -1,0 +1,16 @@
+"""Application settings loaded from environment variables."""
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Global settings for {{ package_name }}."""
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    api_host: str = "0.0.0.0"
+    api_port: int = 8000
+    api_max_upload_size: int = 52_428_800  # 50 MB
+
+
+settings = Settings()

@@ -1,0 +1,18 @@
+"""Shared utilities for {{ package_name }}."""
+
+from pathlib import Path
+
+
+def get_project_version() -> str:
+    """Read version from VERSION file at project root."""
+    version_file = Path(__file__).parent.parent.parent.parent / "VERSION"
+    if version_file.exists():
+        return version_file.read_text().strip()
+    return "0.0.0"
+
+
+def ensure_dirs_exist() -> None:
+    """Create required runtime directories if they do not exist."""
+    project_root = Path(__file__).parent.parent.parent.parent
+    for d in ["data/raw", "data/interim", "data/processed", "data/external", "logs"]:
+        (project_root / d).mkdir(parents=True, exist_ok=True)
