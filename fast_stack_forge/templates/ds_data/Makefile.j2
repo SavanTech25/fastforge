@@ -1,0 +1,109 @@
+# Makefile for the {{ repo_name }} project
+
+.PHONY: help install dev-install format lint typecheck test test-fast all check run clean bump release{% if include_api %} run_api up down docker-build{% endif %}
+
+.DEFAULT_GOAL := help
+
+###################################################################
+# SETUP
+###################################################################
+
+install: ## Install dependencies via uv (prod + dev)
+	uv sync
+
+dev-install: install ## Install dependencies and pre-commit hooks
+	uv run pre-commit install
+
+###################################################################
+# RUN
+###################################################################
+
+run: ## Launch the Streamlit app (http://localhost:8501)
+	uv run streamlit run app/{{ package_name }}_app.py
+
+{% if include_api %}
+run_api: ## Launch the FastAPI server (http://localhost:8000)
+	uv run {{ package_name }}-api
+
+up: ## Start API + Streamlit with Docker Compose
+	docker-compose up -d
+
+down: ## Stop Docker services
+	docker-compose down
+
+docker-build: ## Build Docker images
+	BUILD_VERSION=$$(cat VERSION) \
+	BUILD_REVISION=$$(git rev-parse HEAD 2>/dev/null || echo "unknown") \
+	BUILD_DATE=$$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+	docker-compose build
+{% endif %}
+
+###################################################################
+# CODE QUALITY
+###################################################################
+
+all: lint typecheck test ## Run lint, typecheck, and tests
+
+check: all ## Alias for 'all' (local CI)
+
+format: ## Format the code with ruff
+	uv run ruff check --fix src/ tests/ app/
+	uv run ruff format src/ tests/ app/
+
+lint: ## Lint with ruff
+	uv run ruff check src/ tests/ app/
+	uv run ruff format --check src/ tests/ app/
+
+typecheck: ## Type check with mypy
+	uv run mypy --explicit-package-bases src/ app/
+
+test: ## Run tests with coverage
+	uv run pytest tests/ -v
+
+test-fast: ## Run tests and stop at first failure
+	uv run pytest tests/ -x
+
+###################################################################
+# DEV
+###################################################################
+
+clean: ## Remove caches and venv
+	rm -rf .venv
+	rm -rf .pytest_cache .ruff_cache .mypy_cache htmlcov .coverage coverage.xml dist/
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	find . -type f -name "*.pyc" -delete
+	@echo "Cleaned."
+
+bump: ## Bump version (commitizen)
+	uv run cz bump
+
+release: ## Push commits + tags to origin main
+	git push origin main --follow-tags
+	git push --tags
+
+###################################################################
+# HELP
+###################################################################
+
+help: ## Display this help
+	@echo "Usage: make [target]"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+
+###################################################################
+# OS detection
+###################################################################
+
+ifeq ($(OS),Windows_NT)
+    OPEN := explorer.exe
+else
+    UNAME_S := $(shell uname -s)
+    IS_WSL  := $(shell grep -i microsoft /proc/version 2>/dev/null)
+    ifeq ($(UNAME_S),Darwin)
+        OPEN := open
+    else ifneq ($(IS_WSL),)
+        OPEN := explorer.exe
+    else
+        OPEN := xdg-open
+    endif
+endif

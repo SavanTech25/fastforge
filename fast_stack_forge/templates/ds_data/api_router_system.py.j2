@@ -1,0 +1,23 @@
+"""System router — version & project info."""
+
+from pathlib import Path
+from fastapi import APIRouter
+
+router = APIRouter(prefix="/system", tags=["System"])
+
+
+def get_project_version() -> str:
+    """Read version from VERSION file at project root."""
+    for path in [
+        Path(__file__).parent.parent.parent.parent.parent / "VERSION",
+        Path(__file__).parent.parent.parent.parent / "VERSION",
+        Path(__file__).parent.parent.parent / "VERSION",
+    ]:
+        if path.exists():
+            return path.read_text().strip()
+    return "0.1.0"
+
+
+@router.get("/version", summary="Project version")
+async def version() -> dict:
+    return {"version": get_project_version(), "package": "{{ package_name }}"}

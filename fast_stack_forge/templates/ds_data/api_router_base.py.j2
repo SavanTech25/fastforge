@@ -1,0 +1,15 @@
+"""Base router — health check."""
+
+from fastapi import APIRouter
+
+router = APIRouter(tags=["Health"])
+
+
+@router.get("/", summary="Root")
+async def root() -> dict:
+    return {"status": "ok", "service": "{{ package_name }}"}
+
+
+@router.get("/health", summary="Health check")
+async def health() -> dict:
+    return {"status": "healthy"}

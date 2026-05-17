@@ -1,0 +1,65 @@
+"""Streamlit dashboard for {{ package_name }}."""
+
+import streamlit as st
+import httpx
+from decouple import config
+
+API_URL = config("API_URL", default="http://localhost:8000")
+
+
+def main() -> None:
+    st.set_page_config(
+        page_title="{{ repo_name }}",
+        page_icon="🔬",
+        layout="wide",
+    )
+    st.title("🔬 {{ repo_name }}")
+    st.caption("*Powered by FastForge ⚡ ✕ AstroData*")
+
+    # ── Sidebar ──────────────────────────────────────────────────────────────
+    with st.sidebar:
+        st.header("Navigation")
+        page = st.radio("Go to", ["🏠 Home", "📊 Data Explorer"{% if include_api %}, "🔗 API Status"{% endif %}])
+
+    # ── Pages ─────────────────────────────────────────────────────────────────
+    if page == "🏠 Home":
+        st.header("Welcome")
+        st.info("{{ description }}")
+        st.markdown(
+            """
+            **Quick links:**
+            - Streamlit app → [http://localhost:8501](http://localhost:8501)
+{% if include_api %}
+            - FastAPI docs → [http://localhost:8000/docs](http://localhost:8000/docs)
+            - Health check → [http://localhost:8000/health](http://localhost:8000/health)
+{% endif %}
+            """
+        )
+
+    elif page == "📊 Data Explorer":
+        st.header("📊 Data Explorer")
+        st.info("Upload a CSV file to explore your data.")
+        uploaded = st.file_uploader("Upload CSV", type=["csv"])
+        if uploaded:
+            import pandas as pd
+            df = pd.read_csv(uploaded)
+            st.dataframe(df, use_container_width=True)
+            st.write(f"Shape: {df.shape[0]} rows × {df.shape[1]} columns")
+
+{% if include_api %}
+    elif page == "🔗 API Status":
+        st.header("🔗 API Status")
+        if st.button("Check API health"):
+            try:
+                r = httpx.get(f"{API_URL}/health", timeout=5)
+                if r.status_code == 200:
+                    st.success(f"✅ API is healthy — {r.json()}")
+                else:
+                    st.error(f"❌ API returned {r.status_code}")
+            except Exception as exc:
+                st.error(f"❌ Could not reach API: {exc}")
+{% endif %}
+
+
+if __name__ == "__main__":
+    main()

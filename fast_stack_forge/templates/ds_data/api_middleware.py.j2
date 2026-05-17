@@ -1,0 +1,22 @@
+"""Middleware to limit upload size."""
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
+from fastapi import status
+from decouple import config
+
+
+class LimitUploadSizeMiddleware(BaseHTTPMiddleware):
+    """Reject requests whose body exceeds the configured size limit."""
+
+    async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[override]
+        if request.method in ("POST", "PUT", "PATCH"):
+            content_length = request.headers.get("content-length")
+            max_size = config("API_MAX_UPLOAD_SIZE", default=52428800, cast=int)
+            if content_length and int(content_length) > max_size:
+                return Response(
+                    content="Request body too large.",
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                )
+        return await call_next(request)
